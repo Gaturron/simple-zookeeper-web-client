@@ -7,11 +7,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -24,12 +27,54 @@ public class NodeController {
 
     @GetMapping(name="/**", produces = "application/json")
     @ResponseBody
-    public NodeJsonModel listNode(HttpServletRequest request) throws Exception{
+    public Object listNode(@RequestParam(name="find", required = false) String action,
+                                  HttpServletRequest request) throws Exception{
+
+        if(action != null){
+            return find(request);
+        }
+        return getInfo(request);
+    }
+
+    private List<NodeJsonModel> find(HttpServletRequest request) throws Exception {
+
+        URL url = new URL(request.getRequestURL()+request.getRequestURI());
+        String uri = request.getRequestURI();
+
+        return find(url, uri);
+    }
+
+    private List<NodeJsonModel> find(URL url, String uri) throws Exception {
+
+        List<NodeJsonModel> res = new LinkedList<NodeJsonModel>();
+        res.add(getInfo(url, uri));
+
+        CuratorFramework client = zkClient.getclient();
+
+        for (String i: client.getChildren().forPath(uri)){
+
+            List<NodeJsonModel>
+                    node = find(url, uri+"/"+i);
+
+            if(node.contains("pepe")){
+                res.addAll(node);
+            }
+        }
+
+        return res;
+    }
+
+    private NodeJsonModel getInfo(HttpServletRequest request) throws Exception{
 
         URL url = new URL(request.getRequestURL()+request.getRequestURI());
         String uri = request.getRequestURI();
 
         logger.info("Get request: "+uri);
+
+        return getInfo(url, uri);
+    }
+
+    private NodeJsonModel getInfo(URL url, String uri) throws Exception{
 
         CuratorFramework client = zkClient.getclient();
 

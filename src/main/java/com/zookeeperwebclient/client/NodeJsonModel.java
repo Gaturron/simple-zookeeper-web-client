@@ -42,4 +42,14 @@ public class NodeJsonModel {
     public void setAclNodes(Map<String, Map<String, String>> aclNodes) {
         this.aclNodes = aclNodes;
     }
+
+    public boolean contains(String s){
+        boolean res = false;
+        res = res || data.contains(s);
+        res = res || stat.getCtimeLocalDateTime().contains(s);
+        res = res || stat.getCzxid().contains(s);
+        res = res || stat.getEphemeralOwner().contains(s);
+
+        return res;
+    }
 }
